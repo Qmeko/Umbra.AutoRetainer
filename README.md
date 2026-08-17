@@ -2,7 +2,7 @@
 
 [日本語](README.ja.md)
 
-Umbra toolbar widget that shows AutoRetainer retainer and submarine venture status.
+Umbra toolbar widget that shows AutoRetainer retainer and submarine status.
 
 Example: `R2|5　M0|4`
 
@@ -13,9 +13,14 @@ Example: `R2|5　M0|4`
 
 ## Install
 
-1. Build with `.\build.ps1` and `.\install-dev.ps1`
-2. Enable **Custom Plugins** in Umbra settings
-3. Add `Umbra.AutoRetainer.dll`
-4. Add the **AutoRetainer** widget to the toolbar
-
 Requires [Umbra](https://github.com/una-xiv/umbra) and [AutoRetainer](https://github.com/PunishXIV/AutoRetainer).
+
+1. Open Umbra settings
+2. Open the **Custom Plugins** tab
+3. Set repository owner to `Qmeko`
+4. Set repository name to `Umbra.AutoRetainer`
+5. Hit **Install**
+6. Reload Umbra
+7. Add the **AutoRetainer** widget to the toolbar
+
+Or download `Umbra.AutoRetainer.zip` from [Releases](https://github.com/Qmeko/Umbra.AutoRetainer/releases/latest), then add the DLL in Custom Plugins.
