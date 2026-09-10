@@ -7,9 +7,9 @@ using Dalamud.Plugin.Services;
 namespace BSTExtra;
 
 /// <summary>
-/// RSR は本体DLLのローテしか読まない。
-/// BST には公式ローテが無いので CurrentRotation が null のままだと、一覧UI自体が出ない。
-/// このプラグインは BST Extra を毎フレーム確認し、消されていたら戻す。
+/// BSTExtra.Rotation.dll は RSR と同じ読み込み領域に入れる。
+/// 別プラグインの collectible ALC をまたぐと
+/// "Resolving to a collectible assembly is not supported" になる。
 /// </summary>
 public sealed class Plugin : IDalamudPlugin
 {
@@ -17,9 +17,8 @@ public sealed class Plugin : IDalamudPlugin
     private readonly IFramework _framework;
     private readonly IPluginLog _log;
     private readonly IChatGui _chat;
-    private readonly AssemblyLoadContext _loadContext;
-    private bool _resolveHooked;
     private bool _announced;
+    private bool _loggedError;
     private Type? _extraType;
     private object? _extraInstance;
 
@@ -29,8 +28,6 @@ public sealed class Plugin : IDalamudPlugin
         _framework = framework;
         _log = log;
         _chat = chat;
-        _loadContext = AssemblyLoadContext.GetLoadContext(typeof(Plugin).Assembly)
-                       ?? AssemblyLoadContext.Default;
         _framework.Update += OnUpdate;
         _log.Info("[BST Extra] 起動しました。Rotation Solver の準備を待ちます。");
     }
@@ -43,7 +40,14 @@ public sealed class Plugin : IDalamudPlugin
         }
         catch (Exception ex)
         {
+            if (_loggedError)
+            {
+                return;
+            }
+
+            _loggedError = true;
             _log.Error(ex, "[BST Extra] 追加に失敗しました。");
+            _chat.PrintError("[BST Extra] 追加に失敗しました。/xllog を確認してください。");
         }
     }
 
@@ -56,8 +60,7 @@ public sealed class Plugin : IDalamudPlugin
             return;
         }
 
-        HookResolve();
-        _extraType ??= LoadExtraRotationType();
+        _extraType ??= LoadExtraRotationType(rsAssembly);
         if (_extraType == null)
         {
             return;
@@ -126,7 +129,7 @@ public sealed class Plugin : IDalamudPlugin
             var copy = Array.CreateInstance(groupType, groups.Length);
             Array.Copy(groups, copy, groups.Length);
             copy.SetValue(
-                Activator.CreateInstance(groupType, jobIdProp.GetValue(group), classJobsProp.GetValue(group), merged),
+                Activator.CreateInstance(groupType, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, [jobIdProp.GetValue(group), classJobsProp.GetValue(group), merged], null),
                 i);
             rotationsProp.SetValue(null, copy);
             return;
@@ -136,7 +139,9 @@ public sealed class Plugin : IDalamudPlugin
         Array.Copy(groups, grown, groups.Length);
         var jobArray = Array.CreateInstance(jobType, 1);
         jobArray.SetValue(bstJob, 0);
-        grown.SetValue(Activator.CreateInstance(groupType, bstJob, jobArray, new[] { _extraType! }), groups.Length);
+        grown.SetValue(
+            Activator.CreateInstance(groupType, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic, null, [bstJob, jobArray, new[] { _extraType! }], null),
+            groups.Length);
         rotationsProp.SetValue(null, grown);
     }
 
@@ -214,18 +219,28 @@ public sealed class Plugin : IDalamudPlugin
         }
         catch (Exception ex)
         {
-            _log.Error(ex, "[BST Extra] BST_Extra の作成に失敗しました。");
-            _chat.PrintError("[BST Extra] ローテの作成に失敗しました。/xllog を確認してください。");
+            if (!_loggedError)
+            {
+                _loggedError = true;
+                _log.Error(ex, "[BST Extra] BST_Extra の作成に失敗しました。");
+                _chat.PrintError("[BST Extra] ローテの作成に失敗しました。/xllog を確認してください。");
+            }
+
             return null;
         }
     }
 
-    private Type? LoadExtraRotationType()
+    private Type? LoadExtraRotationType(Assembly rsAssembly)
     {
-        var already = _loadContext.Assemblies.FirstOrDefault(a => a.GetName().Name == "BSTExtra.Rotation");
-        if (already != null)
+        var rsrContext = AssemblyLoadContext.GetLoadContext(rsAssembly)
+                         ?? throw new InvalidOperationException("RSR の読み込み領域が見つかりません。");
+
+        foreach (var assembly in rsrContext.Assemblies)
         {
-            return already.GetType("RotationSolver.ExtraRotations.Melee.BST_Extra");
+            if (assembly.GetName().Name == "BSTExtra.Rotation")
+            {
+                return assembly.GetType("RotationSolver.ExtraRotations.Melee.BST_Extra");
+            }
         }
 
         var directory = Path.GetDirectoryName(_pluginInterface.AssemblyLocation.FullName)
@@ -236,24 +251,9 @@ public sealed class Plugin : IDalamudPlugin
             throw new FileNotFoundException("BSTExtra.Rotation.dll が同じフォルダにありません。", rotationPath);
         }
 
-        return _loadContext.LoadFromAssemblyPath(rotationPath)
-            .GetType("RotationSolver.ExtraRotations.Melee.BST_Extra");
-    }
-
-    private void HookResolve()
-    {
-        if (_resolveHooked)
-        {
-            return;
-        }
-
-        _loadContext.Resolving += ResolveFromLoadedPlugins;
-        _resolveHooked = true;
-    }
-
-    private static Assembly? ResolveFromLoadedPlugins(AssemblyLoadContext context, AssemblyName name)
-    {
-        return FindLoadedAssembly(name.Name);
+        using var stream = new MemoryStream(File.ReadAllBytes(rotationPath));
+        var loaded = rsrContext.LoadFromStream(stream);
+        return loaded.GetType("RotationSolver.ExtraRotations.Melee.BST_Extra");
     }
 
     private static Assembly? FindLoadedAssembly(string? name)
@@ -280,10 +280,5 @@ public sealed class Plugin : IDalamudPlugin
     public void Dispose()
     {
         _framework.Update -= OnUpdate;
-        if (_resolveHooked)
-        {
-            _loadContext.Resolving -= ResolveFromLoadedPlugins;
-            _resolveHooked = false;
-        }
     }
 }
