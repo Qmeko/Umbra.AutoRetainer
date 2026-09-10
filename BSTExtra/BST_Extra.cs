@@ -15,30 +15,53 @@ namespace RotationSolver.ExtraRotations.Melee;
 [SourceCode(Path = "BSTExtra/BST_Extra.cs")]
 public sealed class BST_Extra : BeastmasterRotation
 {
-    private readonly BaseAction _smashAxe = new((ActionID)44879);
-    private readonly BaseAction _axebladeBite = new((ActionID)44883);
-    private readonly BaseAction _shieldsplitter = new((ActionID)44885);
+    private BaseAction? _smashAxe;
+    private BaseAction? _axebladeBite;
+    private BaseAction? _shieldsplitter;
 
-    public BST_Extra()
+    private BaseAction SmashAxe => _smashAxe ??= new((ActionID)44879);
+    private BaseAction AxebladeBite
     {
-        _axebladeBite.Setting.ComboIds = [(ActionID)44879];
-        _shieldsplitter.Setting.ComboIds = [(ActionID)44883];
+        get
+        {
+            if (_axebladeBite == null)
+            {
+                _axebladeBite = new((ActionID)44883);
+                _axebladeBite.Setting.ComboIds = [(ActionID)44879];
+            }
+
+            return _axebladeBite;
+        }
+    }
+
+    private BaseAction Shieldsplitter
+    {
+        get
+        {
+            if (_shieldsplitter == null)
+            {
+                _shieldsplitter = new((ActionID)44885);
+                _shieldsplitter.Setting.ComboIds = [(ActionID)44883];
+            }
+
+            return _shieldsplitter;
+        }
     }
 
     /// <inheritdoc/>
     protected override bool GeneralGCD(out IAction? act)
     {
-        if (_shieldsplitter.CanUse(out act))
+        if (Shieldsplitter.CanUse(out act))
         {
             return true;
         }
 
-        if (_axebladeBite.CanUse(out act))
+        if (AxebladeBite.CanUse(out act))
         {
             return true;
         }
 
-        if (_smashAxe.CanUse(out act))
+        if (SmashAxe.CanUse(out act))
         {
             return true;
         }
