@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <DalamudLibPath Condition="'$(DalamudLibPath)' == ''">$(APPDATA)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
+    <RsrLibPath Condition="'$(RsrLibPath)' == ''">$(APPDATA)\XIVLauncher\installedPlugins\RotationSolver\7.5.6.1\</RsrLibPath>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Platforms>x64</Platforms>
+    <Nullable>enable</Nullable>
+    <LangVersion>latest</LangVersion>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <EnableWindowsTargeting>true</EnableWindowsTargeting>
+    <OutputPath>$(APPDATA)\XIVLauncher\devPlugins\BSTExtra\</OutputPath>
+    <AssemblyName>BSTExtra.Rotation</AssemblyName>
+    <RootNamespace>RotationSolver.ExtraRotations.Melee</RootNamespace>
+    <Version>1.0.1</Version>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Plugin.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Dalamud">
+      <HintPath>$(DalamudLibPath)Dalamud.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="ECommons">
+      <HintPath>$(RsrLibPath)ECommons.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="RotationSolver.Basic">
+      <HintPath>$(RsrLibPath)RotationSolver.Basic.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+</Project>

@@ -1,0 +1,19 @@
+{
+  "Author": "local",
+  "Name": "BST Extra Rotation",
+  "InternalName": "BSTExtra",
+  "AssemblyVersion": "1.0.1.0",
+  "Description": "Adds a Beastmaster 3-hit combo Extra Rotation to Rotation Solver Reborn. Does not replace built-in rotations.",
+  "Punchline": "Add BST Extra to RSR without overwriting existing rotations.",
+  "ApplicableVersion": "any",
+  "DalamudApiLevel": 15,
+  "LoadRequiredState": 2,
+  "LoadSync": false,
+  "CanUnloadAsync": false,
+  "LoadPriority": 1,
+  "Tags": [
+    "combat",
+    "rotation",
+    "beastmaster"
+  ]
+}
