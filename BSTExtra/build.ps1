@@ -12,6 +12,13 @@ if (-not (Test-Path (Join-Path $DalamudLib "Dalamud.dll"))) {
 
 Write-Host "=== BST Extra 1.0.4 build ===" -ForegroundColor Cyan
 
+# 古いフォルダと混ざらないように、新しい場所だけ使う
+$OldDir = Join-Path $env:APPDATA "XIVLauncher\devPlugins\BSTExtra\"
+if (Test-Path $OldDir) {
+    Write-Host "古いフォルダを削除します: $OldDir" -ForegroundColor Yellow
+    Remove-Item -Recurse -Force $OldDir
+}
+
 New-Item -ItemType Directory -Force -Path $OutDir | Out-Null
 
 # 古い Rotation.dll が残っていると誤って使われるので消す
