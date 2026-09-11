@@ -3,7 +3,7 @@ $ErrorActionPreference = "Stop"
 
 $Root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $DalamudLib = Join-Path $env:APPDATA "XIVLauncher\addon\Hooks\dev\"
-$OutDir = Join-Path $env:APPDATA "XIVLauncher\devPlugins\BSTExtra\"
+$OutDir = Join-Path $env:APPDATA "XIVLauncher\devPlugins\BSTExtra.104\"
 
 if (-not (Test-Path (Join-Path $DalamudLib "Dalamud.dll"))) {
     Write-Host "ERROR: Dalamud が見つかりません: $DalamudLib" -ForegroundColor Red
